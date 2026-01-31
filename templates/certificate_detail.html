@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate Details - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Dashboard
+</a>
+<a href="/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Documents
+</a>
+<a href="/certificates" class="text-primary-600 font-medium px-3 py-2 rounded-md text-sm">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Link -->
+    <a href="/certificates" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Certificates
+    </a>
+
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ certificate.common_name }}</h1>
+            <p class="text-gray-600">Certificate Details</p>
+        </div>
+        <div>
+            {% if certificate.is_valid %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                Valid
+            </span>
+            {% elif certificate.is_revoked %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                Revoked
+            </span>
+            {% elif certificate.is_expired %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                Expired
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                Inactive
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Certificate Details -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Certificate Information</h2>
+        <dl class="space-y-4">
+            <div>
+                <dt class="text-sm text-gray-500">Serial Number</dt>
+                <dd class="font-medium text-gray-900 font-mono">{{ certificate.certificate_serial }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-gray-500">Subject</dt>
+                <dd class="font-medium text-gray-900 break-all">{{ certificate.subject }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm text-gray-500">Issuer</dt>
+                <dd class="font-medium text-gray-900 break-all">{{ certificate.issuer }}</dd>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <dt class="text-sm text-gray-500">Valid From</dt>
+                    <dd class="font-medium text-gray-900">{{ certificate.valid_from.strftime('%d %B %Y') }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500">Valid Until</dt>
+                    <dd class="font-medium text-gray-900">{{ certificate.valid_until.strftime('%d %B %Y') }}</dd>
+                </div>
+            </div>
+            {% if certificate.days_until_expiry > 0 %}
+            <div>
+                <dt class="text-sm text-gray-500">Days Until Expiry</dt>
+                <dd class="font-medium {% if certificate.days_until_expiry <= 30 %}text-yellow-600{% else %}text-gray-900{% endif %}">
+                    {{ certificate.days_until_expiry }} days
+                </dd>
+            </div>
+            {% endif %}
+            {% if certificate.is_mock %}
+            <div>
+                <dt class="text-sm text-gray-500">Certificate Type</dt>
+                <dd class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Mock (Development/Testing)
+                </dd>
+            </div>
+            {% endif %}
+            {% if certificate.revoked_at %}
+            <div>
+                <dt class="text-sm text-gray-500">Revoked At</dt>
+                <dd class="font-medium text-red-600">{{ certificate.revoked_at.strftime('%d %B %Y at %H:%M') }}</dd>
+            </div>
+            {% if certificate.revocation_reason %}
+            <div>
+                <dt class="text-sm text-gray-500">Revocation Reason</dt>
+                <dd class="font-medium text-red-600">{{ certificate.revocation_reason }}</dd>
+            </div>
+            {% endif %}
+            {% endif %}
+        </dl>
+    </div>
+
+    <!-- Actions -->
+    {% if certificate.is_active and not certificate.is_revoked and not certificate.is_expired %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Actions</h2>
+        <form method="POST" action="/certificates/{{ certificate.id }}/deactivate" onsubmit="return confirm('Are you sure you want to deactivate this certificate?');">
+            <input type="hidden" name="reason" value="Deactivated by user">
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                Deactivate Certificate
+            </button>
+        </form>
+        <p class="text-sm text-gray-500 mt-2">
+            Deactivating a certificate prevents it from being used for signing but does not revoke it.
+        </p>
+    </div>
+    {% elif not certificate.is_active and not certificate.is_revoked and not certificate.is_expired %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Actions</h2>
+        <form method="POST" action="/certificates/{{ certificate.id }}/reactivate">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                Reactivate Certificate
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

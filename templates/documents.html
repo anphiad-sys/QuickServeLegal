@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Dashboard
+</a>
+<a href="/documents" class="text-primary-600 font-medium px-3 py-2 rounded-md text-sm">
+    My Documents
+</a>
+<a href="/upload" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Serve Document
+</a>
+<a href="/certificates" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">My Documents</h1>
+            <p class="text-gray-600">All documents you have served</p>
+        </div>
+        <a href="/upload" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            Serve New Document
+        </a>
+    </div>
+
+    {% if documents %}
+    <!-- Documents Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Document
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Recipient
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Served
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for doc in documents %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ doc.original_filename }}</div>
+                                {% if doc.matter_reference %}
+                                <div class="text-xs text-gray-500">{{ doc.matter_reference }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ doc.recipient_email }}</div>
+                        {% if doc.recipient_name %}
+                        <div class="text-xs text-gray-500">{{ doc.recipient_name }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ doc.created_at.strftime('%d %b %Y') }}</div>
+                        <div class="text-xs text-gray-500">{{ doc.created_at.strftime('%H:%M') }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if not doc.is_signed %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            Needs Signing
+                        </span>
+                        {% elif doc.is_served %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Served
+                        </span>
+                        {% if doc.is_downloaded %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-1">
+                            Downloaded
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pending
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="/document/{{ doc.id }}" class="text-primary-600 hover:text-primary-900">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
+        <p class="text-gray-500 mb-6">You haven't served any documents yet.</p>
+        <a href="/upload" class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+            Serve Your First Document
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

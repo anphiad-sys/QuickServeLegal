@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block title %}Document Details - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Dashboard
+</a>
+<a href="/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    My Documents
+</a>
+<a href="/upload" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Serve Document
+</a>
+<a href="/certificates" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Link -->
+    <a href="/dashboard" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Dashboard
+    </a>
+
+    <!-- Success Messages -->
+    {% if request.query_params.get('signed') %}
+    <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+        Document signed successfully with Advanced Electronic Signature. You can now serve it to the recipient.
+    </div>
+    {% endif %}
+    {% if request.query_params.get('served') %}
+    <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+        Document served successfully. The recipient has been notified via email with the document attached.
+    </div>
+    {% endif %}
+    {% if request.query_params.get('already_served') %}
+    <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
+        This document has already been served.
+    </div>
+    {% endif %}
+    {% if request.query_params.get('error') %}
+    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ request.query_params.get('error') }}
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ document.original_filename }}</h1>
+            <p class="text-gray-600">Reference: QSL-{{ '%06d' % document.id }}</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Signing Status Badge -->
+            {% if document.is_signed %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Signed
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+                Not Signed
+            </span>
+            {% endif %}
+
+            <!-- Service Status Badge (per ECTA) -->
+            {% if document.is_served %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Served
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Pending
+            </span>
+            {% endif %}
+
+            <!-- Download Status Badge (additional info for sender) -->
+            {% if document.is_downloaded %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                </svg>
+                Downloaded
+            </span>
+            {% endif %}
+
+            <!-- Email Delivery Status Badge -->
+            {% if document.email_status == 'delivered' %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800" title="Email delivered to recipient's mail server">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Email Delivered
+            </span>
+            {% elif document.email_status == 'opened' %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800" title="Recipient opened the email">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Email Opened
+            </span>
+            {% elif document.email_status == 'bounced' or document.email_status == 'failed' %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800" title="{{ document.email_bounce_reason or 'Email could not be delivered' }}">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Email Bounced
+            </span>
+            {% elif document.email_status == 'sent' %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800" title="Email sent, awaiting delivery confirmation">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+                Email Sent
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+        <!-- Main Details -->
+        <div class="md:col-span-2 space-y-6">
+            <!-- Document Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Document Information</h2>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Filename</dt>
+                        <dd class="font-medium text-gray-900">{{ document.original_filename }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">File Size</dt>
+                        <dd class="font-medium text-gray-900">{{ (document.file_size / 1024)|round(1) }} KB</dd>
+                    </div>
+                    {% if document.matter_reference %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Matter Reference</dt>
+                        <dd class="font-medium text-gray-900">{{ document.matter_reference }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if document.description %}
+                    <div>
+                        <dt class="text-gray-500 mb-1">Description</dt>
+                        <dd class="text-gray-900">{{ document.description }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Recipient Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Recipient</h2>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Email</dt>
+                        <dd class="font-medium text-gray-900">{{ document.recipient_email }}</dd>
+                    </div>
+                    {% if document.recipient_name %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Name</dt>
+                        <dd class="font-medium text-gray-900">{{ document.recipient_name }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Service Timeline</h2>
+                <div class="space-y-4">
+                    <!-- Uploaded -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Document Uploaded</p>
+                            <p class="text-sm text-gray-500">{{ document.created_at.strftime('%d %B %Y at %H:%M') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Service Complete (per ECTA) -->
+                    <div class="flex items-start">
+                        {% if document.is_served %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Service Complete</p>
+                            <p class="text-sm text-gray-500">{% if document.served_at %}{{ document.served_at.strftime('%d %B %Y at %H:%M') }}{% else %}{{ document.notified_at.strftime('%d %B %Y at %H:%M') if document.notified_at else 'Notification sent' }}{% endif %}</p>
+                            <p class="text-xs text-gray-400">Per ECTA Section 23 - entered recipient's email system</p>
+                        </div>
+                        {% else %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Awaiting Service</p>
+                            <p class="text-sm text-gray-500">Notification pending</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Delivery Confirmation (SendGrid tracking) -->
+                    {% if document.is_served and document.email_message_id %}
+                    <div class="flex items-start">
+                        {% if document.is_email_delivered %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Email Delivered</p>
+                            <p class="text-sm text-gray-500">{% if document.email_delivered_at %}{{ document.email_delivered_at.strftime('%d %B %Y at %H:%M') }}{% else %}Confirmed{% endif %}</p>
+                            <p class="text-xs text-gray-400">Confirmed delivery to recipient's mail server</p>
+                        </div>
+                        {% elif document.is_email_bounced %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-red-900">Email Bounced</p>
+                            <p class="text-sm text-red-600">{{ document.email_bounce_reason or 'Delivery failed' }}</p>
+                            <p class="text-xs text-gray-400">Please verify recipient email address</p>
+                        </div>
+                        {% else %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Email Sent</p>
+                            <p class="text-sm text-gray-500">Awaiting delivery confirmation</p>
+                            <p class="text-xs text-gray-400">Tracking ID: {{ document.email_message_id[:16] }}...</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Opened (optional) -->
+                    {% if document.is_email_opened %}
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Email Opened</p>
+                            <p class="text-sm text-gray-500">{% if document.email_opened_at %}{{ document.email_opened_at.strftime('%d %B %Y at %H:%M') }}{% else %}Confirmed{% endif %}</p>
+                            <p class="text-xs text-gray-400">Recipient opened the notification email</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <!-- Downloaded (optional confirmation for sender) -->
+                    <div class="flex items-start">
+                        {% if document.is_downloaded %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">Document Downloaded</p>
+                            <p class="text-sm text-gray-500">{{ document.downloaded_at.strftime('%d %B %Y at %H:%M') }}</p>
+                            <p class="text-xs text-gray-400">Additional confirmation (for your records only)</p>
+                        </div>
+                        {% else %}
+                        <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-500">Not Yet Downloaded</p>
+                            <p class="text-sm text-gray-400">Link expires {{ document.token_expires_at.strftime('%d %B %Y at %H:%M') }}</p>
+                            <p class="text-xs text-gray-400">Service is already complete per ECTA</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Actions -->
+        <div class="space-y-6">
+            <!-- Download Link -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Download Link</h2>
+                <div class="space-y-3">
+                    <input
+                        type="text"
+                        readonly
+                        value="{{ download_url }}"
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700"
+                    >
+                    <button
+                        onclick="copyLink('{{ download_url }}')"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                    >
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+
+            <!-- Signing Action -->
+            {% if not document.is_signed %}
+            <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-6">
+                <h2 class="font-semibold text-yellow-900 mb-2">Signature Required</h2>
+                <p class="text-sm text-yellow-800 mb-4">This document needs to be signed with AES before it can be served.</p>
+                <a
+                    href="/signing/document/{{ document.id }}"
+                    class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 px-4 rounded-lg text-sm text-center transition-colors"
+                >
+                    Sign Document
+                </a>
+            </div>
+            {% elif not document.is_served %}
+            <!-- Serve Action (signed but not yet served) -->
+            <div class="bg-green-50 rounded-xl border border-green-200 p-6">
+                <h2 class="font-semibold text-green-900 mb-2">Ready to Serve</h2>
+                <p class="text-sm text-green-800 mb-4">Document is signed. Click below to serve it on the recipient.</p>
+                <form action="/document/{{ document.id }}/serve" method="POST">
+                    <button
+                        type="submit"
+                        class="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm text-center transition-colors"
+                    >
+                        Serve Document Now
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- PDF Downloads -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Documents</h2>
+                <div class="space-y-3">
+                    <!-- Proof of Service -->
+                    <a
+                        href="/document/{{ document.id }}/proof-of-service"
+                        class="flex items-center justify-between w-full bg-primary-50 hover:bg-primary-100 text-primary-700 font-medium py-3 px-4 rounded-lg text-sm transition-colors"
+                    >
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Proof of Service
+                        </span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+
+                    <!-- Court Filing Certificate (only if signed) -->
+                    {% if document.is_signed %}
+                    <a
+                        href="/signing/document/{{ document.id }}/court-certificate"
+                        class="flex items-center justify-between w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 px-4 rounded-lg text-sm transition-colors"
+                    >
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Court Filing Certificate
+                        </span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    {% endif %}
+
+                    <!-- Stamped PDF (available after service per ECTA) -->
+                    {% if document.is_served %}
+                    <a
+                        href="/document/{{ document.id }}/stamped"
+                        class="flex items-center justify-between w-full bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 px-4 rounded-lg text-sm transition-colors"
+                    >
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Stamped Document
+                        </span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    {% else %}
+                    <div class="flex items-center justify-between w-full bg-gray-50 text-gray-400 font-medium py-3 px-4 rounded-lg text-sm cursor-not-allowed">
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Stamped Document
+                        </span>
+                        <span class="text-xs">Available after service</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Audit Trail -->
+                    <a
+                        href="/audit/document/{{ document.id }}"
+                        class="flex items-center justify-between w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-3 px-4 rounded-lg text-sm transition-colors"
+                    >
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            Audit Trail
+                        </span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- AES Info (if signed) -->
+            {% if document.is_signed %}
+            <div class="bg-green-50 rounded-xl border border-green-100 p-4">
+                <h3 class="font-medium text-green-900 mb-2">AES Signature</h3>
+                <p class="text-sm text-green-800 mb-2">
+                    Signed on {{ document.signed_at.strftime('%d %b %Y at %H:%M') }}
+                </p>
+                {% if document.document_hash %}
+                <p class="text-xs text-green-700 font-mono break-all">
+                    Hash: {{ document.document_hash[:24] }}...
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Help -->
+            <div class="bg-blue-50 rounded-xl border border-blue-100 p-4">
+                <h3 class="font-medium text-blue-900 mb-2">About these documents</h3>
+                <ul class="text-sm text-blue-800 space-y-2">
+                    <li><strong>Proof of Service:</strong> Court-ready document proving electronic service</li>
+                    {% if document.is_signed %}
+                    <li><strong>Court Filing Certificate:</strong> Full AES signature details for court</li>
+                    {% endif %}
+                    <li><strong>Stamped Document:</strong> Original PDF with receipt confirmation stamp</li>
+                    <li><strong>Audit Trail:</strong> Complete history of all document events</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyLink(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    }
+</script>
+{% endblock %}

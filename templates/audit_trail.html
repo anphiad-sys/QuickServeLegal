@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Trail - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Dashboard
+</a>
+<a href="/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Documents
+</a>
+<a href="/certificates" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Audit Trail</h1>
+            <p class="text-gray-600">Complete history for document QSL-{{ "%06d"|format(document.id) }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ document.original_filename }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a
+                href="/document/{{ document.id }}"
+                class="text-gray-600 hover:text-gray-900 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+            >
+                Back to Document
+            </a>
+            <a
+                href="/audit/document/{{ document.id }}/export"
+                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+                Export JSON
+            </a>
+        </div>
+    </div>
+
+    <!-- Integrity Status -->
+    <div class="mb-6 {% if integrity_valid %}bg-green-50 border-green-200{% else %}bg-red-50 border-red-200{% endif %} border rounded-xl p-4">
+        <div class="flex items-center">
+            {% if integrity_valid %}
+            <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="ml-2 text-green-800 font-medium">Audit Chain Integrity Verified</span>
+            {% else %}
+            <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <span class="ml-2 text-red-800 font-medium">Integrity Check Failed: {{ integrity_error }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Audit Entries -->
+    {% if audit_entries %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flow-root">
+            <ul class="-mb-8 p-6">
+                {% for entry in audit_entries %}
+                <li>
+                    <div class="relative pb-8">
+                        {% if not loop.last %}
+                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                        {% endif %}
+                        <div class="relative flex space-x-3">
+                            <!-- Event Icon -->
+                            <div>
+                                {% if 'signature' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                {% elif 'document.uploaded' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                </span>
+                                {% elif 'document.downloaded' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                    </svg>
+                                </span>
+                                {% elif 'notification' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </span>
+                                {% elif 'certificate' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </span>
+                                {% elif 'failed' in entry.event_type or 'error' in entry.event_type %}
+                                <span class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                {% else %}
+                                <span class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center ring-8 ring-white">
+                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Event Details -->
+                            <div class="flex-1 min-w-0 pt-1.5">
+                                <div class="text-sm text-gray-900">
+                                    <span class="font-medium">{{ entry.event_type }}</span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-600">{{ entry.description }}</p>
+
+                                <!-- Metadata -->
+                                {% if entry.event_metadata %}
+                                <div class="mt-2 text-xs text-gray-500">
+                                    {% for key, value in entry.event_metadata.items() %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 mr-2">
+                                        {{ key }}: {{ value }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Timestamp and Hash -->
+                                <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                                    <span>{{ entry.created_at.strftime('%d %b %Y at %H:%M:%S') }} UTC</span>
+                                    {% if entry.ip_address %}
+                                    <span>IP: {{ entry.ip_address }}</span>
+                                    {% endif %}
+                                    <span class="font-mono" title="{{ entry.entry_hash }}">
+                                        Hash: {{ entry.entry_hash[:16] }}...
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <!-- No Entries -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">No Audit Entries</h3>
+        <p class="mt-2 text-sm text-gray-500">
+            No audit trail entries have been recorded for this document yet.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-6">
+        <h3 class="font-medium text-blue-900 mb-2">About the Audit Trail</h3>
+        <p class="text-sm text-blue-800">
+            Every action taken on this document is recorded in an immutable audit log.
+            Each entry is cryptographically linked to the previous entry using SHA-256 hashes,
+            creating a tamper-evident chain. This audit trail can be exported and submitted
+            as evidence of the document lifecycle.
+        </p>
+    </div>
+</div>
+{% endblock %}

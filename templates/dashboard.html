@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-primary-600 font-medium px-3 py-2 rounded-md text-sm">
+    Dashboard
+</a>
+<a href="/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    My Documents
+</a>
+<a href="/upload" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Serve Document
+</a>
+<a href="/certificates" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Welcome, {{ user.full_name.split()[0] }}</h1>
+        <p class="text-gray-600">Manage your document service and track receipts</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="text-sm text-gray-500 mb-1">Documents Served</div>
+            <div class="text-3xl font-bold text-gray-900">{{ stats.served or 0 }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="text-sm text-gray-500 mb-1">Pending Download</div>
+            <div class="text-3xl font-bold text-yellow-600">{{ stats.pending or 0 }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="text-sm text-gray-500 mb-1">Confirmed Receipt</div>
+            <div class="text-3xl font-bold text-green-600">{{ stats.confirmed or 0 }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="text-sm text-gray-500 mb-1">Documents Received</div>
+            <div class="text-3xl font-bold text-primary-600">{{ stats.received or 0 }}</div>
+        </div>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <!-- Serve a Document -->
+        <a href="/upload" class="bg-primary-600 hover:bg-primary-700 rounded-xl p-6 text-white transition-colors group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Serve a Document</h3>
+                    <p class="text-primary-100">Upload and send a legal document to another attorney</p>
+                </div>
+                <svg class="w-8 h-8 text-primary-200 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </div>
+        </a>
+
+        <!-- View Received -->
+        <a href="/received" class="bg-white hover:bg-gray-50 rounded-xl p-6 border border-gray-200 transition-colors group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Documents for You</h3>
+                    <p class="text-gray-600">View documents that have been served on you</p>
+                </div>
+                <svg class="w-8 h-8 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
+            <a href="/documents" class="text-primary-600 hover:text-primary-700 text-sm font-medium">View All →</a>
+        </div>
+
+        {% if recent_documents %}
+        <div class="divide-y divide-gray-200">
+            {% for doc in recent_documents %}
+            <a href="/document/{{ doc.id }}" class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer block">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center
+                        {% if not doc.is_signed %}bg-orange-100 text-orange-600
+                        {% elif doc.is_served %}bg-green-100 text-green-600
+                        {% else %}bg-yellow-100 text-yellow-600{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900">{{ doc.original_filename }}</div>
+                        <div class="text-sm text-gray-500">To: {{ doc.recipient_email }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        {% if not doc.is_signed %}
+                        <div class="text-sm font-medium text-orange-600">Needs Signing</div>
+                        {% elif doc.is_served %}
+                        <div class="text-sm font-medium text-green-600">Served</div>
+                        {% if doc.is_downloaded %}
+                        <div class="text-xs text-blue-600">Downloaded ✓</div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-sm font-medium text-yellow-600">Pending</div>
+                        {% endif %}
+                        <div class="text-xs text-gray-500">{{ doc.created_at.strftime('%d %b %Y') }}</div>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-gray-500 mb-4">No documents yet</p>
+            <a href="/upload" class="text-primary-600 hover:text-primary-700 font-medium">
+                Serve your first document
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

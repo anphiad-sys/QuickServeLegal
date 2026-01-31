@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Audit Integrity - {{ app_name }}{% endblock %}
+
+{% block nav_links %}
+<a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Dashboard
+</a>
+<a href="/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Documents
+</a>
+<a href="/certificates" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+    Certificates
+</a>
+<div class="relative ml-3">
+    <div class="flex items-center space-x-3">
+        <span class="text-sm text-gray-700">{{ user.full_name }}</span>
+        <a href="/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+            Logout
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Audit Log Integrity Verification</h1>
+        <p class="text-gray-600">Verify the hash chain integrity of the audit log</p>
+    </div>
+
+    <!-- Result Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        {% if integrity_check.valid %}
+        <div class="text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-green-800 mb-2">Integrity Verified</h2>
+            <p class="text-green-700">The audit log hash chain is intact. No tampering detected.</p>
+            <p class="text-sm text-gray-500 mt-4">{{ integrity_check.entries_checked }} entries verified</p>
+        </div>
+        {% else %}
+        <div class="text-center">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-red-800 mb-2">Integrity Check Failed</h2>
+            <p class="text-red-700">{{ integrity_check.error }}</p>
+            {% if integrity_check.first_invalid_id %}
+            <p class="text-sm text-red-600 mt-2">First invalid entry: ID {{ integrity_check.first_invalid_id }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-4">{{ integrity_check.entries_checked }} entries checked before failure</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-6">
+        <h3 class="font-medium text-blue-900 mb-2">About Integrity Verification</h3>
+        <p class="text-sm text-blue-800">
+            Each audit log entry contains a SHA-256 hash that incorporates the hash of the previous entry,
+            creating a tamper-evident chain. If any entry is modified, the chain breaks and verification fails.
+            This ensures the audit trail remains legally admissible as evidence.
+        </p>
+    </div>
+
+    <!-- Back Link -->
+    <div class="mt-6 text-center">
+        <a href="/dashboard" class="text-primary-600 hover:text-primary-700 font-medium">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

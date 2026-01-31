@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickServe Legal - Workflow Diagram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .arrow {
+            position: relative;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 16px solid #3b82f6;
+        }
+        .arrow-right::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            transform: translateY(-50%);
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-left: 16px solid #3b82f6;
+        }
+        .connector-line {
+            background: linear-gradient(to bottom, #3b82f6, #3b82f6);
+            width: 4px;
+            margin: 0 auto;
+        }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">QuickServe Legal</h1>
+            <h2 class="text-xl text-gray-600">Electronic Document Service Workflow</h2>
+            <p class="text-sm text-gray-500 mt-2">ECTA Section 23 Compliant</p>
+        </div>
+
+        <!-- Workflow Diagram -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+
+            <!-- SENDER SECTION -->
+            <div class="mb-8">
+                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg inline-block mb-6">
+                    <span class="font-semibold">SENDER (Attorney)</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Upload -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    1
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                        <h3 class="font-bold text-blue-900 text-lg">Upload Document</h3>
+                        <p class="text-blue-700 text-sm">Select PDF, enter recipient email and matter reference</p>
+                        <div class="mt-2 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded inline-block">
+                            /upload
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="connector-line h-8 ml-6"></div>
+            <div class="arrow h-4 ml-6 mb-2"></div>
+
+            <!-- Step 2: Sign -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    2
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
+                        <h3 class="font-bold text-yellow-900 text-lg">Sign with AES</h3>
+                        <p class="text-yellow-700 text-sm">Apply Advanced Electronic Signature using LAWTrust certificate</p>
+                        <div class="mt-2 flex items-center space-x-2">
+                            <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">/signing/document/{id}</span>
+                            <span class="text-xs text-gray-500">ECTA Section 13</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="connector-line h-8 ml-6"></div>
+            <div class="arrow h-4 ml-6 mb-2"></div>
+
+            <!-- Step 3: Serve -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    3
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                        <h3 class="font-bold text-green-900 text-lg">Serve Document</h3>
+                        <p class="text-green-700 text-sm">Click "Serve Document Now" to send to recipient</p>
+                        <div class="mt-2 flex items-center space-x-2">
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">POST /document/{id}/serve</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="connector-line h-8 ml-6"></div>
+            <div class="arrow h-4 ml-6 mb-2"></div>
+
+            <!-- Step 4: Email Sent -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    4
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
+                        <h3 class="font-bold text-purple-900 text-lg">Email Notification Sent</h3>
+                        <p class="text-purple-700 text-sm">Email with <strong>PDF attached</strong> enters recipient's information system</p>
+                        <div class="mt-2 flex items-center space-x-2">
+                            <span class="text-xs font-bold text-purple-800 bg-purple-200 px-2 py-1 rounded">SERVICE COMPLETE</span>
+                            <span class="text-xs text-gray-500">ECTA Section 23</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="my-10 border-t-4 border-dashed border-gray-300 relative">
+                <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-gray-500 font-medium">
+                    Email Delivery
+                </span>
+            </div>
+
+            <!-- RECIPIENT SECTION -->
+            <div class="mb-8">
+                <div class="bg-indigo-600 text-white px-4 py-2 rounded-lg inline-block mb-6">
+                    <span class="font-semibold">RECIPIENT (Attorney)</span>
+                </div>
+            </div>
+
+            <!-- Step 5: Receive Email -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    5
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4">
+                        <h3 class="font-bold text-indigo-900 text-lg">Receive Email</h3>
+                        <p class="text-indigo-700 text-sm">Email arrives with PDF attached + backup download link</p>
+                        <div class="mt-2 text-xs text-indigo-600">
+                            Document is now legally "received" per ECTA
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="connector-line h-8 ml-6"></div>
+            <div class="arrow h-4 ml-6 mb-2"></div>
+
+            <!-- Step 6: Download (Optional) -->
+            <div class="flex items-center mb-2">
+                <div class="w-12 h-12 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    6
+                </div>
+                <div class="ml-4 flex-grow">
+                    <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                        <h3 class="font-bold text-gray-700 text-lg">Download from Server <span class="font-normal text-sm">(Optional)</span></h3>
+                        <p class="text-gray-600 text-sm">Recipient may also download from backup link on server</p>
+                        <div class="mt-2 flex items-center space-x-2">
+                            <span class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">/download/{token}</span>
+                            <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Sender notified</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="my-10 border-t-4 border-dashed border-gray-300 relative">
+                <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-gray-500 font-medium">
+                    Available Documents
+                </span>
+            </div>
+
+            <!-- Documents Available -->
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-blue-900">Proof of Service</h4>
+                    <p class="text-xs text-blue-700 mt-1">Court-ready document confirming electronic service</p>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-center">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-indigo-900">Court Filing Certificate</h4>
+                    <p class="text-xs text-indigo-700 mt-1">Full AES signature details for court submission</p>
+                </div>
+
+                <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-green-900">Stamped PDF</h4>
+                    <p class="text-xs text-green-700 mt-1">Original document with receipt confirmation stamp</p>
+                </div>
+            </div>
+
+            <!-- Legal Reference -->
+            <div class="mt-10 bg-gray-50 rounded-xl p-6">
+                <h3 class="font-bold text-gray-900 mb-3">Legal Compliance</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <h4 class="font-semibold text-gray-800">ECTA Section 13 - Electronic Signatures</h4>
+                        <p class="text-gray-600">AES signatures have the same legal effect as handwritten signatures</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">ECTA Section 23 - Time of Receipt</h4>
+                        <p class="text-gray-600">Document is "received" when it enters the recipient's information system</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Rule 4A - Uniform Rules of Court</h4>
+                        <p class="text-gray-600">Electronic service of subsequent court documents is permitted</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Audit Trail</h4>
+                        <p class="text-gray-600">Complete hash-chain secured log of all document events</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500 text-sm">
+            <p>QuickServe Legal - Electronic Service of Legal Documents</p>
+            <p class="mt-1">Generated: January 2026</p>
+        </div>
+    </div>
+</body>
+</html>

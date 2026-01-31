@@ -1,0 +1,293 @@
+{% extends "pnsa/base.html" %}
+
+{% block title %}Review Document - PNSA {{ branch.branch_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="/pnsa/dashboard" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Dashboard
+        </a>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Review Extracted Details</h1>
+                <p class="text-gray-600">Verify and correct the information extracted from the document</p>
+            </div>
+            {% if document.ocr_confidence %}
+            <div class="text-right">
+                <span class="text-sm text-gray-500">OCR Confidence</span>
+                <div class="text-lg font-bold {% if document.ocr_confidence > 0.7 %}text-green-600{% elif document.ocr_confidence > 0.4 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                    {{ "%.0f"|format(document.ocr_confidence * 100) }}%
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/pnsa/document/{{ walk_in.id }}/update" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column - Recipient & Case Details -->
+            <div class="space-y-6">
+                <!-- Recipient Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-pnsa-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Recipient (QSL Member)
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="recipient_email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Recipient Email <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                id="recipient_email"
+                                name="recipient_email"
+                                value="{{ document.recipient_email if document.recipient_email != 'pending@review.required' else '' }}"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="attorney@firm.co.za"
+                            >
+                            <p class="mt-1 text-xs text-gray-500">Must be a registered QSL member</p>
+                        </div>
+
+                        <div>
+                            <label for="recipient_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Recipient Name
+                            </label>
+                            <input
+                                type="text"
+                                id="recipient_name"
+                                name="recipient_name"
+                                value="{{ document.recipient_name or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="Adv. J. van Niekerk"
+                            >
+                        </div>
+
+                        {% if recipient_member %}
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="text-sm text-green-700 font-medium">QSL Member Found</span>
+                            </div>
+                            <p class="text-sm text-green-600 mt-1">{{ recipient_member.full_name }} - {{ recipient_member.firm_name or 'No firm' }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Case Details Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-pnsa-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Case Details
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="case_number" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Case Number
+                                </label>
+                                <input
+                                    type="text"
+                                    id="case_number"
+                                    name="case_number"
+                                    value="{{ document.ocr_case_number or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                    placeholder="12345/2026"
+                                >
+                            </div>
+                            <div>
+                                <label for="pleading_type" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Pleading Type
+                                </label>
+                                <input
+                                    type="text"
+                                    id="pleading_type"
+                                    name="pleading_type"
+                                    value="{{ document.ocr_pleading_type or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                    placeholder="Notice of Motion"
+                                >
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="court_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Court
+                            </label>
+                            <input
+                                type="text"
+                                id="court_name"
+                                name="court_name"
+                                value="{{ document.ocr_court_name or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="High Court of South Africa"
+                            >
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="plaintiff" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Plaintiff/Applicant
+                                </label>
+                                <input
+                                    type="text"
+                                    id="plaintiff"
+                                    name="plaintiff"
+                                    value="{{ document.ocr_plaintiff or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                    placeholder="Smith"
+                                >
+                            </div>
+                            <div>
+                                <label for="defendant" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Defendant/Respondent
+                                </label>
+                                <input
+                                    type="text"
+                                    id="defendant"
+                                    name="defendant"
+                                    value="{{ document.ocr_defendant or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                    placeholder="Jones"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Serving Attorney -->
+            <div class="space-y-6">
+                <!-- Serving Attorney Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-pnsa-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Serving Attorney (Sender)
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="serving_attorney_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Attorney Name <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="serving_attorney_name"
+                                name="serving_attorney_name"
+                                value="{{ walk_in.serving_attorney_name or '' }}"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="Adv. M. Smith"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="serving_attorney_firm" class="block text-sm font-medium text-gray-700 mb-1">
+                                Law Firm
+                            </label>
+                            <input
+                                type="text"
+                                id="serving_attorney_firm"
+                                name="serving_attorney_firm"
+                                value="{{ walk_in.serving_attorney_firm or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="Smith & Associates"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="serving_attorney_email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email
+                            </label>
+                            <input
+                                type="email"
+                                id="serving_attorney_email"
+                                name="serving_attorney_email"
+                                value="{{ walk_in.serving_attorney_email or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="attorney@firm.co.za"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="serving_attorney_phone" class="block text-sm font-medium text-gray-700 mb-1">
+                                Phone
+                            </label>
+                            <input
+                                type="tel"
+                                id="serving_attorney_phone"
+                                name="serving_attorney_phone"
+                                value="{{ walk_in.serving_attorney_phone or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pnsa-500 focus:border-pnsa-500"
+                                placeholder="+27 11 123 4567"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Info -->
+                <div class="bg-gray-50 rounded-xl border border-gray-200 p-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Document Information</h3>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">File Name:</dt>
+                            <dd class="text-gray-900 font-medium truncate max-w-[200px]">{{ document.original_filename }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">File Size:</dt>
+                            <dd class="text-gray-900">{{ "%.2f"|format(document.file_size / 1024 / 1024) }} MB</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Scanned At:</dt>
+                            <dd class="text-gray-900">{{ walk_in.scanned_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Service Fee:</dt>
+                            <dd class="text-gray-900 font-semibold">R{{ "%.2f"|format(service_fee) }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+            <a href="/pnsa/dashboard" class="text-gray-600 hover:text-gray-900">
+                Cancel
+            </a>
+            <button
+                type="submit"
+                class="inline-flex items-center px-6 py-3 pnsa-gradient text-white font-semibold rounded-lg transition-opacity hover:opacity-90"
+            >
+                Confirm Details & Continue
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

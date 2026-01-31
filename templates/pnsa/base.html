@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PNSA - {{ app_name }}{% endblock %}</title>
+
+    <!-- Tailwind CSS (CDN for development) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX (for interactive updates without JavaScript) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pnsa: {
+                            50: '#fef3f2',
+                            100: '#fee4e2',
+                            200: '#fecfca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        },
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        accent: {
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* PNSA branding gradient */
+        .pnsa-gradient {
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+        }
+        /* Print styles */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { font-size: 12pt; }
+            .print-full-width { width: 100% !important; max-width: 100% !important; }
+        }
+        @media screen {
+            .print-only { display: none !important; }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="pnsa-gradient shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="/pnsa/dashboard" class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                            <span class="text-pnsa-700 font-bold text-xl">P</span>
+                        </div>
+                        <div class="text-white">
+                            <span class="text-xl font-semibold">PNSA</span>
+                            <span class="text-pnsa-200 text-sm ml-2">Branch Portal</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="flex items-center space-x-4">
+                    {% block nav_links %}
+                    {% if operator %}
+                    <a href="/pnsa/dashboard" class="text-pnsa-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                        Dashboard
+                    </a>
+                    <a href="/pnsa/scan" class="bg-white text-pnsa-700 hover:bg-pnsa-50 font-semibold px-4 py-2 rounded-md text-sm transition-colors">
+                        + New Service
+                    </a>
+                    <div class="flex items-center space-x-3 ml-4 pl-4 border-l border-pnsa-500">
+                        <div class="text-right">
+                            <div class="text-sm text-white">{{ operator.full_name }}</div>
+                            <div class="text-xs text-pnsa-200">{{ branch.branch_name if branch else '' }}</div>
+                        </div>
+                        <a href="/pnsa/logout" class="text-pnsa-200 hover:text-white text-sm">
+                            Logout
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="/pnsa/login" class="text-white hover:text-pnsa-100 px-3 py-2 rounded-md text-sm font-medium">
+                        Login
+                    </a>
+                    {% endif %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 mt-auto no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-sm">
+                    PNSA Branch Portal - Powered by {{ app_name }}
+                </div>
+                <div class="text-sm mt-2 md:mt-0">
+                    &copy; 2026 QuickServe Legal (Pty) Ltd
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

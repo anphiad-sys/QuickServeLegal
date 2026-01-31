@@ -1,0 +1,247 @@
+{% extends "pnsa/base.html" %}
+
+{% block title %}Service Confirmation - PNSA {{ branch.branch_name }}{% endblock %}
+
+{% block head %}
+<style>
+    @media print {
+        @page {
+            margin: 1cm;
+        }
+        body {
+            font-size: 11pt;
+            background: white !important;
+        }
+        .print-container {
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+        .print-box {
+            border: 2px solid black !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print-container">
+    <!-- Action Buttons (No Print) -->
+    <div class="flex items-center justify-between mb-6 no-print">
+        <a href="/pnsa/dashboard" class="inline-flex items-center text-gray-600 hover:text-gray-900">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Dashboard
+        </a>
+        <div class="flex space-x-3">
+            <button
+                onclick="window.print()"
+                class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Print Confirmation
+            </button>
+            <form method="POST" action="/pnsa/document/{{ walk_in.id }}/mark-printed" class="inline">
+                <button
+                    type="submit"
+                    class="inline-flex items-center px-4 py-2 pnsa-gradient text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                >
+                    Done
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Message (No Print) -->
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 no-print">
+        <div class="flex items-center">
+            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <div>
+                <h3 class="text-green-800 font-semibold">Document Served Successfully</h3>
+                <p class="text-green-700 text-sm">The recipient has been notified via email.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Confirmation -->
+    <div class="bg-white rounded-xl shadow-sm border-2 border-gray-300 p-8 print-box">
+        <!-- Header -->
+        <div class="text-center border-b-2 border-gray-300 pb-6 mb-6">
+            <div class="text-2xl font-bold text-gray-900 mb-2">SERVICE CONFIRMATION</div>
+            <div class="text-lg text-gray-600">QuickServe Legal - Electronic Document Service</div>
+            <div class="text-sm text-gray-500 mt-2">via PNSA {{ branch.branch_name }}</div>
+        </div>
+
+        <!-- Reference Numbers -->
+        <div class="bg-gray-100 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wide">Service Reference</span>
+                    <div class="text-lg font-mono font-bold text-gray-900">PNSA-{{ walk_in.id }}-{{ walk_in.served_at.strftime('%Y%m%d') if walk_in.served_at else '' }}</div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-gray-500 uppercase tracking-wide">Date & Time</span>
+                    <div class="text-lg font-bold text-gray-900">{{ walk_in.served_at.strftime('%Y-%m-%d %H:%M') if walk_in.served_at else 'Pending' }} SAST</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Details -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 border-b border-gray-200 pb-2">Document Details</h3>
+            <div class="grid grid-cols-2 gap-y-3 text-sm">
+                <div>
+                    <span class="text-gray-500">Case Number:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ document.matter_reference or 'Not specified' }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Document Type:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ document.ocr_pleading_type or 'Legal Document' }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Court:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ document.ocr_court_name or 'Not specified' }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">File Name:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ document.original_filename }}</span>
+                </div>
+                {% if document.ocr_plaintiff or document.ocr_defendant %}
+                <div class="col-span-2">
+                    <span class="text-gray-500">Parties:</span>
+                    <span class="font-medium text-gray-900 ml-2">
+                        {% if document.ocr_plaintiff and document.ocr_defendant %}
+                        {{ document.ocr_plaintiff }} v {{ document.ocr_defendant }}
+                        {% elif document.ocr_plaintiff %}
+                        {{ document.ocr_plaintiff }}
+                        {% elif document.ocr_defendant %}
+                        {{ document.ocr_defendant }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Serving Attorney -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 border-b border-gray-200 pb-2">Serving Attorney (Sender)</h3>
+            <div class="text-sm">
+                <div class="font-medium text-gray-900">{{ walk_in.serving_attorney_name }}</div>
+                {% if walk_in.serving_attorney_firm %}
+                <div class="text-gray-600">{{ walk_in.serving_attorney_firm }}</div>
+                {% endif %}
+                {% if walk_in.serving_attorney_email %}
+                <div class="text-gray-500">{{ walk_in.serving_attorney_email }}</div>
+                {% endif %}
+                {% if walk_in.serving_attorney_phone %}
+                <div class="text-gray-500">{{ walk_in.serving_attorney_phone }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recipient -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 border-b border-gray-200 pb-2">Recipient</h3>
+            <div class="text-sm">
+                <div class="font-medium text-gray-900">{{ document.recipient_name or document.recipient_email }}</div>
+                <div class="text-gray-600">{{ document.recipient_email }}</div>
+            </div>
+        </div>
+
+        <!-- Messenger Details -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 border-b border-gray-200 pb-2">Messenger Details</h3>
+            <div class="grid grid-cols-2 gap-y-2 text-sm">
+                <div>
+                    <span class="text-gray-500">Name:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ walk_in.messenger_name }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">ID Type:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ walk_in.messenger_id_type }}</span>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-gray-500">ID Number:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ walk_in.messenger_id_number }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Details -->
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 border-b border-gray-200 pb-2">Service Details</h3>
+            <div class="grid grid-cols-2 gap-y-2 text-sm">
+                <div>
+                    <span class="text-gray-500">Branch:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ branch.branch_name }} ({{ branch.branch_code }})</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Operator:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ operator.full_name }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Service Fee:</span>
+                    <span class="font-medium text-gray-900 ml-2">R{{ "%.2f"|format(walk_in.service_fee) }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Billing Status:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ walk_in.billing_status_text }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legal Notice -->
+        <div class="bg-gray-50 rounded-lg p-4 text-xs text-gray-600 border border-gray-200">
+            <p class="font-semibold mb-2">Legal Notice:</p>
+            <p>
+                This document was served electronically in accordance with the Electronic Communications and
+                Transactions Act 25 of 2002 (ECTA), Section 23. Per ECTA, the document is deemed received when
+                it entered the recipient's information system and is capable of being retrieved.
+            </p>
+            <p class="mt-2">
+                This confirmation serves as proof of service. The original document has been transmitted to the
+                recipient's email address and is available for download via secure link.
+            </p>
+        </div>
+
+        <!-- Signature Lines (Print Only) -->
+        <div class="mt-8 pt-6 border-t border-gray-200 print-only" style="display: none;">
+            <div class="grid grid-cols-2 gap-8">
+                <div>
+                    <div class="border-b border-gray-400 h-16"></div>
+                    <div class="text-xs text-gray-500 mt-1">Messenger Signature</div>
+                </div>
+                <div>
+                    <div class="border-b border-gray-400 h-16"></div>
+                    <div class="text-xs text-gray-500 mt-1">Operator Signature & Stamp</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
+            <p>Powered by QuickServe Legal (Pty) Ltd | www.quickservelegal.co.za</p>
+            <p class="mt-1">Confirmation printed: {{ now().strftime('%Y-%m-%d %H:%M') if now is defined else '' }} SAST</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add current timestamp for print
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const timestamp = now.toISOString().slice(0, 16).replace('T', ' ');
+        document.querySelectorAll('.print-timestamp').forEach(el => {
+            el.textContent = timestamp + ' SAST';
+        });
+    });
+</script>
+{% endblock %}

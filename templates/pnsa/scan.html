@@ -1,0 +1,153 @@
+{% extends "pnsa/base.html" %}
+
+{% block title %}Scan Document - PNSA {{ branch.branch_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="/pnsa/dashboard" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Dashboard
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900">Scan Document</h1>
+        <p class="text-gray-600">Upload the scanned legal document to begin the service process</p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        {% if error %}
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/pnsa/scan" enctype="multipart/form-data" class="space-y-6">
+            <!-- File Upload -->
+            <div>
+                <label for="document" class="block text-sm font-medium text-gray-700 mb-2">
+                    Scanned Document (PDF) <span class="text-red-500">*</span>
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-gray-300 border-dashed rounded-xl hover:border-pnsa-400 transition-colors bg-gray-50" id="drop-zone">
+                    <div class="space-y-2 text-center">
+                        <svg class="mx-auto h-16 w-16 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" id="upload-icon">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600 justify-center">
+                            <label for="document" class="relative cursor-pointer rounded-md font-semibold text-pnsa-600 hover:text-pnsa-500 focus-within:outline-none">
+                                <span>Upload scanned PDF</span>
+                                <input id="document" name="document" type="file" accept=".pdf,application/pdf" required class="sr-only">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">PDF up to {{ max_file_size_mb }}MB</p>
+                    </div>
+                </div>
+                <p id="file-name" class="mt-3 text-sm text-gray-600 hidden bg-pnsa-50 px-4 py-2 rounded-lg"></p>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center justify-between pt-4">
+                <a href="/pnsa/dashboard" class="text-gray-600 hover:text-gray-900">
+                    Cancel
+                </a>
+                <button
+                    type="submit"
+                    id="submit-btn"
+                    class="inline-flex items-center px-6 py-3 pnsa-gradient text-white font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    <svg class="w-5 h-5 mr-2 hidden animate-spin" id="spinner" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="btn-text">Upload & Extract Details</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-6">
+        <h3 class="font-medium text-blue-900 mb-3">What happens next?</h3>
+        <ol class="text-sm text-blue-800 space-y-2">
+            <li class="flex items-start">
+                <span class="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
+                <span>Document is uploaded and processed by OCR</span>
+            </li>
+            <li class="flex items-start">
+                <span class="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
+                <span>Review and confirm extracted details (parties, case number, etc.)</span>
+            </li>
+            <li class="flex items-start">
+                <span class="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
+                <span>Capture messenger ID details</span>
+            </li>
+            <li class="flex items-start">
+                <span class="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">4</span>
+                <span>Serve document electronically to QSL member</span>
+            </li>
+            <li class="flex items-start">
+                <span class="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">5</span>
+                <span>Print confirmation for messenger</span>
+            </li>
+        </ol>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileInput = document.getElementById('document');
+    const fileNameEl = document.getElementById('file-name');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const spinner = document.getElementById('spinner');
+    const dropZone = document.getElementById('drop-zone');
+    const uploadIcon = document.getElementById('upload-icon');
+
+    // File selection handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            fileNameEl.innerHTML = '<strong>Selected:</strong> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+            fileNameEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            dropZone.classList.add('border-pnsa-400', 'bg-pnsa-50');
+            uploadIcon.classList.add('text-pnsa-500');
+        }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('border-pnsa-400', 'bg-pnsa-50');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        if (!fileInput.files.length) {
+            dropZone.classList.remove('border-pnsa-400', 'bg-pnsa-50');
+        }
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type === 'application/pdf') {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Form submission
+    document.querySelector('form').addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+        btnText.textContent = 'Processing...';
+    });
+</script>
+{% endblock %}
