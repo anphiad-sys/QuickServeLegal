@@ -45,29 +45,39 @@ class DocumentExtraction:
 
 
 # South African court document extraction prompt
-SA_LEGAL_EXTRACTION_PROMPT = """Analyze this South African legal document and extract the following information in JSON format:
+SA_LEGAL_EXTRACTION_PROMPT = """Analyze this South African legal document and extract the following information in JSON format.
 
-1. **Case Details:**
-   - case_number: The case/matter number (e.g., "12345/2026", "A123/2026")
+**IMPORTANT INSTRUCTIONS FOR FINDING ATTORNEY DETAILS:**
+- Attorney contact details are ALWAYS found at the END of the document
+- If there is a filing sheet (stamped page with "REGISTRAR" at top), attorney details are at the END of the filing sheet
+- Look for blocks of text containing firm names, addresses, phone numbers, fax numbers, email addresses, and reference numbers
+- The SERVING attorney (who prepared/sent the document) typically appears with their letterhead OR in a signature block
+- The RECEIVING attorney (who the document is addressed to) is often marked with "TO:", "SERVICE:", "Served on:", or "c/o"
+- Attorney blocks typically contain: Firm name (often ending in "INC", "INC.", "INCORPORATED", "ATTORNEYS"), physical address, Tel/Phone, Fax, Email, Ref/Reference
+
+**Extract the following:**
+
+1. **Case Details (usually on FIRST page):**
+   - case_number: The case/matter number (e.g., "12345/2026", "A123/2026", "86332/2018")
    - court_name: The court name (e.g., "High Court of South Africa, Gauteng Division, Pretoria")
-   - pleading_type: The type of document (e.g., "Summons", "Notice of Motion", "Plea", "Declaration")
+   - pleading_type: The type of document (e.g., "Summons", "Notice of Motion", "Plea", "Declaration", "Notice of Intention to Defend")
 
-2. **Parties:**
+2. **Parties (usually on FIRST page):**
    - plaintiff: The plaintiff/applicant name(s)
    - defendant: The defendant/respondent name(s)
 
-3. **Serving Attorney (the attorney sending/serving this document):**
-   - serving_attorney_name: Full name of the attorney
-   - serving_attorney_firm: Law firm name
-   - serving_attorney_email: Email address
-   - serving_attorney_phone: Phone number
-   - serving_attorney_address: Physical address
+3. **Serving Attorney (found at END of document - the attorney who prepared/sent this document):**
+   - serving_attorney_name: Full name of the attorney (individual, not firm)
+   - serving_attorney_firm: Law firm name (e.g., "VAN BREDA & HERBST INC.", "SMITH ATTORNEYS")
+   - serving_attorney_email: Email address (often ends in .co.za)
+   - serving_attorney_phone: Phone/Tel number (format: +27..., 012..., (012)...)
+   - serving_attorney_address: Physical address (street, suburb, city)
 
-4. **Recipient Attorney (the attorney receiving this document - often listed as "TO:" or in the service clause):**
-   - recipient_attorney_name: Full name of the attorney
+4. **Recipient Attorney (found at END of document - marked "TO:" or "SERVICE:"):**
+   - recipient_attorney_name: Full name of the attorney (individual, not firm)
    - recipient_attorney_firm: Law firm name
    - recipient_attorney_email: Email address
-   - recipient_attorney_phone: Phone number
+   - recipient_attorney_phone: Phone/Tel number
    - recipient_attorney_address: Physical address
 
 Return ONLY a valid JSON object with this structure:
@@ -90,13 +100,13 @@ Return ONLY a valid JSON object with this structure:
     "confidence_score": 0.0 to 1.0
 }
 
-Notes:
-- Look for "TO:" sections, letterheads, and signature blocks
-- South African case numbers often follow patterns like "12345/2026" or "A123/2026"
-- Email addresses often end in .co.za
-- Phone numbers start with +27, 0XX, or (0XX)
-- Set confidence_score based on how clearly the information was found (1.0 = very clear, 0.5 = partially visible, 0.0 = not found)
-- If information is not found, use null for that field
+**Additional Notes:**
+- South African case numbers follow patterns like "12345/2026", "A123/2026", or "86332/2018"
+- Email addresses often end in .co.za or .com
+- Phone numbers start with +27, 0XX, or (0XX) - e.g., "012 848 1082", "(012) 361 0951"
+- Look for "Ref:" or "Reference:" lines near attorney details
+- If you see "Per:" followed by a name, that's likely the individual attorney
+- Set confidence_score based on how clearly the information was found (1.0 = very clear, 0.5 = partial, 0.0 = not found)
 """
 
 
@@ -104,24 +114,53 @@ async def convert_pdf_to_images(pdf_path: Path, max_pages: int = 3) -> List[byte
     """
     Convert PDF pages to images for OCR processing.
 
+    Captures BOTH first pages (for case details) AND last pages (for attorney details).
+
     Args:
         pdf_path: Path to the PDF file
-        max_pages: Maximum number of pages to convert
+        max_pages: Maximum number of pages from each end to convert
 
     Returns:
         List of PNG image bytes
     """
     try:
-        from pdf2image import convert_from_path
+        from pdf2image import convert_from_path, pdfinfo_from_path
         from PIL import Image
 
-        # Convert PDF to images
-        images = convert_from_path(
+        # Get total page count
+        try:
+            pdf_info = pdfinfo_from_path(pdf_path)
+            total_pages = pdf_info.get('Pages', 1)
+        except Exception:
+            total_pages = 1
+
+        logger.info(f"PDF has {total_pages} pages")
+
+        images = []
+
+        # Get first pages (for case details, parties)
+        first_pages_count = min(max_pages, total_pages)
+        first_images = convert_from_path(
             pdf_path,
             first_page=1,
-            last_page=max_pages,
-            dpi=150,  # Balance between quality and size
+            last_page=first_pages_count,
+            dpi=150,
         )
+        images.extend(first_images)
+        logger.info(f"Extracted first {len(first_images)} pages")
+
+        # Get last pages (for attorney details) - only if document is longer
+        if total_pages > max_pages:
+            # Calculate which pages to get from the end
+            last_start = max(total_pages - max_pages + 1, max_pages + 1)
+            last_images = convert_from_path(
+                pdf_path,
+                first_page=last_start,
+                last_page=total_pages,
+                dpi=150,
+            )
+            images.extend(last_images)
+            logger.info(f"Extracted last {len(last_images)} pages (pages {last_start}-{total_pages})")
 
         image_bytes_list = []
         for img in images:
