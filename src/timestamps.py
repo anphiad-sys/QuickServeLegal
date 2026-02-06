@@ -12,23 +12,32 @@ from datetime import datetime, timezone, timedelta
 SAST = timezone(timedelta(hours=2), name="SAST")
 
 
+def now_utc() -> datetime:
+    """Return the current time as naive UTC (compatible with database datetimes).
+
+    Non-deprecated replacement for the old utcnow pattern.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def now_sast() -> datetime:
     """Return the current time in SAST (UTC+2)."""
     return datetime.now(SAST)
 
 
-def to_sast(utc_naive: datetime) -> datetime:
+def to_sast(dt: datetime) -> datetime:
     """
-    Convert a naive UTC datetime to SAST-aware datetime.
+    Convert a UTC datetime to SAST-aware datetime.
 
     Args:
-        utc_naive: A datetime assumed to be UTC (as stored in the database).
+        dt: A datetime in UTC (naive or aware).
 
     Returns:
         Timezone-aware datetime in SAST.
     """
-    utc_aware = utc_naive.replace(tzinfo=timezone.utc)
-    return utc_aware.astimezone(SAST)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(SAST)
 
 
 def format_sast(utc_naive: datetime, fmt: str = "%d %B %Y at %H:%M:%S SAST") -> str:

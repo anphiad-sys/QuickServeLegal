@@ -8,7 +8,8 @@ Provides webhook handlers for delivery status updates.
 import hashlib
 import hmac
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
+from src.timestamps import now_utc
 from enum import Enum
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -121,7 +122,7 @@ async def update_document_email_status(
         return False
 
     # Get timestamp from event
-    event_timestamp = datetime.utcnow()
+    event_timestamp = now_utc()
     if "timestamp" in event_data:
         try:
             event_timestamp = datetime.fromtimestamp(event_data["timestamp"])

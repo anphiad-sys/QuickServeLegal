@@ -2,7 +2,7 @@
 QuickServe Legal - Authentication Logic
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import hashlib
 import secrets
@@ -13,6 +13,7 @@ from fastapi import Request, HTTPException, status
 
 from src.config import settings
 from src.models.user import User
+from src.timestamps import now_utc
 
 # Session token serializer
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -119,7 +120,7 @@ async def create_user(
         firm_name=firm_name.strip() if firm_name else None,
         phone=phone.strip() if phone else None,
         attorney_reference=attorney_reference.strip() if attorney_reference else None,
-        terms_accepted_at=datetime.utcnow(),
+        terms_accepted_at=now_utc(),
     )
     db.add(user)
     await db.commit()
@@ -145,7 +146,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> Opti
 
 async def update_last_login(db: AsyncSession, user: User) -> None:
     """Update the user's last login timestamp."""
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = now_utc()
     await db.commit()
 
 

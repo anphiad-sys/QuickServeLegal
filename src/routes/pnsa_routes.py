@@ -6,7 +6,8 @@ Web-based interface for PNSA branch operators to process walk-in document servic
 
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from src.timestamps import now_utc
 from pathlib import Path
 from typing import Optional
 from decimal import Decimal
@@ -233,7 +234,7 @@ async def pnsa_dashboard(
     daily_stats = await get_operator_daily_stats(db, operator.id)
 
     # Get recent services for this branch (today)
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = now_utc().replace(hour=0, minute=0, second=0, microsecond=0)
     result = await db.execute(
         select(WalkInService)
         .where(
@@ -329,7 +330,7 @@ async def pnsa_scan_submit(
             pass
 
         # Create preliminary document record (will be updated after review)
-        token_expires_at = datetime.utcnow() + timedelta(hours=settings.DOWNLOAD_TOKEN_EXPIRE_HOURS)
+        token_expires_at = now_utc() + timedelta(hours=settings.DOWNLOAD_TOKEN_EXPIRE_HOURS)
 
         # Find or create the PNSA system user for this branch
         pnsa_sender = await _get_pnsa_system_user(db, branch)
@@ -387,7 +388,7 @@ async def pnsa_scan_submit(
             # Status
             status=WalkInServiceStatus.PENDING,
             ocr_confidence=ocr_confidence,
-            scanned_at=datetime.utcnow(),
+            scanned_at=now_utc(),
         )
 
         db.add(walk_in)
@@ -573,7 +574,7 @@ async def pnsa_document_update(
     walk_in.serving_attorney_email = serving_attorney_email.strip() if serving_attorney_email else None
     walk_in.serving_attorney_phone = serving_attorney_phone.strip() if serving_attorney_phone else None
     walk_in.billed_to_member_id = recipient_member.id
-    walk_in.reviewed_at = datetime.utcnow()
+    walk_in.reviewed_at = now_utc()
     walk_in.status = WalkInServiceStatus.REVIEWED
 
     await db.commit()
@@ -702,14 +703,14 @@ async def pnsa_serve_document(
     if notification_sent:
         # Mark document as served
         doc.status = "served"
-        doc.served_at = datetime.utcnow()
-        doc.notified_at = datetime.utcnow()
+        doc.served_at = now_utc()
+        doc.notified_at = now_utc()
         if message_id:
             doc.email_message_id = message_id
             doc.email_status = "sent"
 
         # Update walk-in service
-        walk_in.served_at = datetime.utcnow()
+        walk_in.served_at = now_utc()
         walk_in.status = WalkInServiceStatus.SERVED
 
         # Record billing
@@ -800,7 +801,7 @@ async def pnsa_print_confirmation(
 
     # Mark confirmation as printed
     if not walk_in.confirmations_printed_at:
-        walk_in.confirmations_printed_at = datetime.utcnow()
+        walk_in.confirmations_printed_at = now_utc()
         walk_in.status = WalkInServiceStatus.COMPLETED
         await db.commit()
 
@@ -840,7 +841,7 @@ async def pnsa_mark_printed(
 
     # Mark as printed if not already
     if not walk_in.confirmations_printed_at:
-        walk_in.confirmations_printed_at = datetime.utcnow()
+        walk_in.confirmations_printed_at = now_utc()
         walk_in.status = WalkInServiceStatus.COMPLETED
         await db.commit()
 

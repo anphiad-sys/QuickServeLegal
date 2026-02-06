@@ -4,7 +4,7 @@ QuickServe Legal - Document Upload/Download Logic
 
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List
 from sqlalchemy import select, or_
@@ -13,6 +13,7 @@ from fastapi import UploadFile, HTTPException, status
 
 from src.config import settings
 from src.models.document import Document
+from src.timestamps import now_utc
 from src.models.user import User
 
 
@@ -111,7 +112,7 @@ async def create_document(
     file_size = await save_uploaded_file(file, stored_filename)
 
     # Calculate token expiry
-    token_expires_at = datetime.utcnow() + timedelta(hours=settings.DOWNLOAD_TOKEN_EXPIRE_HOURS)
+    token_expires_at = now_utc() + timedelta(hours=settings.DOWNLOAD_TOKEN_EXPIRE_HOURS)
 
     # Create document record
     document = Document(
@@ -188,8 +189,8 @@ async def mark_document_served(
     This occurs when the notification email is sent.
     """
     document.status = "served"
-    document.served_at = datetime.utcnow()
-    document.notified_at = datetime.utcnow()
+    document.served_at = now_utc()
+    document.notified_at = now_utc()
 
     await db.commit()
     await db.refresh(document)
@@ -213,7 +214,7 @@ async def try_mark_document_downloaded(
     from sqlalchemy import update
 
     truncated_ua = user_agent[:500] if user_agent else None
-    now = datetime.utcnow()
+    now = now_utc()
 
     result = await db.execute(
         update(Document)

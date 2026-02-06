@@ -5,7 +5,7 @@ Simple service fee tracking for PNSA walk-in services.
 No payment integration yet - just tracks fees and billing status.
 """
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from typing import Optional, List
 from sqlalchemy import select, func, and_
@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.models.walk_in_service import WalkInService, BillingStatus
+from src.timestamps import now_utc
 from src.models.user import User
 from src.models.branch import Branch
 
@@ -141,7 +142,7 @@ async def mark_as_invoiced(
 ) -> WalkInService:
     """Mark a walk-in service fee as invoiced."""
     walk_in_service.billing_status = BillingStatus.INVOICED
-    walk_in_service.billed_at = datetime.utcnow()
+    walk_in_service.billed_at = now_utc()
     await db.commit()
     await db.refresh(walk_in_service)
     return walk_in_service
@@ -153,7 +154,7 @@ async def mark_as_paid(
 ) -> WalkInService:
     """Mark a walk-in service fee as paid."""
     walk_in_service.billing_status = BillingStatus.PAID
-    walk_in_service.paid_at = datetime.utcnow()
+    walk_in_service.paid_at = now_utc()
     await db.commit()
     await db.refresh(walk_in_service)
     return walk_in_service
@@ -191,7 +192,7 @@ async def get_branch_daily_summary(
         Dictionary with summary data
     """
     if target_date is None:
-        target_date = datetime.utcnow().date()
+        target_date = now_utc().date()
 
     # Get start and end of day
     start_of_day = datetime.combine(target_date, datetime.min.time())
@@ -304,7 +305,7 @@ async def get_operator_daily_stats(
         Dictionary with stats
     """
     if target_date is None:
-        target_date = datetime.utcnow().date()
+        target_date = now_utc().date()
 
     # Get start and end of day
     start_of_day = datetime.combine(target_date, datetime.min.time())

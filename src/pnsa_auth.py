@@ -5,7 +5,7 @@ Separate authentication system for PNSA branch operators.
 Mirrors the patterns in src/auth.py but for BranchOperator accounts.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import select
@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request, HTTPException, status
 
 from src.config import settings
+from src.timestamps import now_utc
 from src.auth import hash_password, verify_password  # Single source of truth
 from src.models.branch_operator import BranchOperator
 from src.models.branch import Branch
@@ -137,7 +138,7 @@ async def authenticate_operator(
 
 async def update_operator_last_login(db: AsyncSession, operator: BranchOperator) -> None:
     """Update the operator's last login timestamp."""
-    operator.last_login_at = datetime.utcnow()
+    operator.last_login_at = now_utc()
     await db.commit()
 
 

@@ -4,6 +4,8 @@ QuickServe Legal - Main Application Entry Point
 Electronic service of legal documents with verified receipt confirmation.
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -24,11 +26,39 @@ from src.routes.webhook_routes import router as webhook_router
 from src.routes.pnsa_routes import router as pnsa_router
 from src.documents import get_user_sent_documents, get_user_received_documents, get_document_stats
 
+
+# =============================================================================
+# LIFESPAN
+# =============================================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown logic."""
+    # --- Startup ---
+    await init_db()
+    print(f"""
+    ==============================================================
+    QuickServe Legal is starting...
+
+    Version: {settings.APP_VERSION}
+    URL: {settings.BASE_URL}
+    Docs: {settings.BASE_URL}/docs
+    ==============================================================
+    """)
+
+    yield
+
+    # --- Shutdown ---
+    await close_db()
+    print(f"\nQuickServe Legal is shutting down...\n")
+
+
 # Create FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
 )
 
 # Mount static files (CSS, JS, images)
@@ -105,33 +135,6 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
         }
     )
 
-
-# =============================================================================
-# STARTUP & SHUTDOWN
-# =============================================================================
-
-@app.on_event("startup")
-async def startup_event():
-    """Run on application startup."""
-    # Initialize database tables
-    await init_db()
-
-    print(f"""
-    ==============================================================
-    QuickServe Legal is starting...
-
-    Version: {settings.APP_VERSION}
-    URL: {settings.BASE_URL}
-    Docs: {settings.BASE_URL}/docs
-    ==============================================================
-    """)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Run on application shutdown."""
-    await close_db()
-    print(f"\nQuickServe Legal is shutting down...\n")
 
 
 # =============================================================================

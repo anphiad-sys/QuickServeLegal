@@ -9,10 +9,11 @@ import hashlib
 import base64
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Tuple
 from sqlalchemy import select
+from src.timestamps import now_utc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
@@ -63,7 +64,7 @@ class MockLAWTrustAPI:
             Dictionary with signature data
         """
         # Create a deterministic but unique signature value
-        signature_data = f"{document_hash}:{certificate.certificate_serial}:{datetime.utcnow().isoformat()}"
+        signature_data = f"{document_hash}:{certificate.certificate_serial}:{now_utc().isoformat()}"
         signature_bytes = hashlib.sha512(signature_data.encode()).digest()
         signature_value = base64.b64encode(signature_bytes).decode()
 
@@ -73,7 +74,7 @@ class MockLAWTrustAPI:
         return {
             "signature_value": signature_value,
             "lawtrust_reference": lawtrust_ref,
-            "lawtrust_timestamp": datetime.utcnow().isoformat(),
+            "lawtrust_timestamp": now_utc().isoformat(),
             "signing_method": "MOCK",
             "signature_algorithm": "SHA256withRSA",
             "success": True,
@@ -242,7 +243,7 @@ async def create_mock_certificate(
     subject = f"CN={user.full_name}, O={user.firm_name or 'Law Firm'}, C=ZA"
     issuer = "CN=Mock LAWTrust CA, O=Mock Certification Authority, C=ZA"
 
-    valid_from = datetime.utcnow()
+    valid_from = now_utc()
     valid_until = valid_from + timedelta(days=settings.AES_CERTIFICATE_VALIDITY_DAYS)
 
     return await register_certificate(
@@ -351,7 +352,7 @@ async def sign_document(
         lawtrust_timestamp=sign_result.get("lawtrust_timestamp"),
         signing_method=sign_result.get("signing_method", "AES"),
         signature_algorithm=sign_result.get("signature_algorithm", "SHA256withRSA"),
-        signed_at=datetime.utcnow(),
+        signed_at=now_utc(),
     )
 
     db.add(signature)
@@ -359,7 +360,7 @@ async def sign_document(
 
     # Update document
     document.signing_status = "signed"
-    document.signed_at = datetime.utcnow()
+    document.signed_at = now_utc()
     document.signed_by_user_id = user.id
     document.signature_id = signature.id
 

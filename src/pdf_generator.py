@@ -9,9 +9,9 @@ Generates:
 """
 
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from src.timestamps import format_sast
+from src.timestamps import format_sast, now_utc
 from typing import Optional, TYPE_CHECKING
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -353,7 +353,7 @@ def generate_proof_of_service(
     story.append(Spacer(1, 1*cm))
 
     # Footer with generation timestamp
-    gen_time = format_sast(datetime.utcnow())
+    gen_time = format_sast(now_utc())
     story.append(Paragraph(
         f"<i>This Proof of Service was generated on {gen_time}</i>",
         styles['QSLLegal']
@@ -921,7 +921,7 @@ def generate_court_filing_certificate(
     story.append(Spacer(1, 1*cm))
 
     # Footer
-    gen_time = format_sast(datetime.utcnow())
+    gen_time = format_sast(now_utc())
     story.append(Paragraph(
         f"<i>This Court Filing Certificate was generated on {gen_time}</i>",
         styles['CFCFooter']

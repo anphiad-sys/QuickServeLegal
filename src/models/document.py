@@ -2,11 +2,12 @@
 QuickServe Legal - Document Model
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Boolean, DateTime, Integer, ForeignKey, Text, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base
+from src.timestamps import now_utc
 
 if TYPE_CHECKING:
     from src.models.walk_in_service import WalkInService
@@ -112,7 +113,7 @@ class Document(Base):
 
     @property
     def is_expired(self) -> bool:
-        return datetime.utcnow() > self.token_expires_at and not self.is_downloaded
+        return now_utc() > self.token_expires_at and not self.is_downloaded
 
     @property
     def is_signed(self) -> bool:

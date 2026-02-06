@@ -4,11 +4,12 @@ QuickServe Legal - Certificate Model
 Stores LAWTrust digital certificate information for attorneys.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base
+from src.timestamps import now_utc
 
 
 class Certificate(Base):
@@ -58,7 +59,7 @@ class Certificate(Base):
     @property
     def is_valid(self) -> bool:
         """Check if certificate is currently valid."""
-        now = datetime.utcnow()
+        now = now_utc()
         return (
             self.is_active
             and self.revoked_at is None
@@ -68,7 +69,7 @@ class Certificate(Base):
     @property
     def is_expired(self) -> bool:
         """Check if certificate has expired."""
-        return datetime.utcnow() > self.valid_until
+        return now_utc() > self.valid_until
 
     @property
     def is_revoked(self) -> bool:
@@ -80,7 +81,7 @@ class Certificate(Base):
         """Get number of days until certificate expires."""
         if self.is_expired:
             return 0
-        delta = self.valid_until - datetime.utcnow()
+        delta = self.valid_until - now_utc()
         return max(0, delta.days)
 
     @property

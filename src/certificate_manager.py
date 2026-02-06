@@ -4,7 +4,7 @@ QuickServe Legal - Certificate Manager
 Manages LAWTrust digital certificates for attorneys.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,7 @@ from src.models.certificate import Certificate
 from src.models.user import User
 from src.models.audit import AuditEventType
 from src.audit import log_event
+from src.timestamps import now_utc
 
 
 async def get_user_certificates(
@@ -77,7 +78,7 @@ def check_certificate_status(certificate: Certificate) -> dict:
     Returns:
         Dictionary with status details
     """
-    now = datetime.utcnow()
+    now = now_utc()
 
     return {
         "certificate_id": certificate.id,
@@ -257,7 +258,7 @@ async def revoke_certificate(
         Updated Certificate
     """
     certificate.is_active = False
-    certificate.revoked_at = datetime.utcnow()
+    certificate.revoked_at = now_utc()
     certificate.revocation_reason = reason
 
     await db.commit()
@@ -296,7 +297,7 @@ async def check_expiring_certificates(
     """
     from datetime import timedelta
 
-    threshold_date = datetime.utcnow() + timedelta(days=days_threshold)
+    threshold_date = now_utc() + timedelta(days=days_threshold)
 
     result = await db.execute(
         select(Certificate)
@@ -304,7 +305,7 @@ async def check_expiring_certificates(
             Certificate.is_active == True,
             Certificate.revoked_at.is_(None),
             Certificate.valid_until <= threshold_date,
-            Certificate.valid_until > datetime.utcnow(),  # Not already expired
+            Certificate.valid_until > now_utc(),  # Not already expired
         )
         .order_by(Certificate.valid_until.asc())
     )

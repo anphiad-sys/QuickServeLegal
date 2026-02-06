@@ -6,6 +6,7 @@ TDD: These tests define expected behavior for the document service flow.
 
 import io
 from datetime import datetime, timedelta
+from src.timestamps import now_utc
 
 import pytest
 from tests.conftest import csrf_data
@@ -106,8 +107,8 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok1",
-            token_expires_at=datetime.utcnow() + timedelta(hours=1), status="pending",
-            downloaded_at=datetime.utcnow(),
+            token_expires_at=now_utc() + timedelta(hours=1), status="pending",
+            downloaded_at=now_utc(),
         )
         db.add(doc)
         await db.commit()
@@ -120,7 +121,7 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s2.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok2",
-            token_expires_at=datetime.utcnow() + timedelta(hours=1), status="pending",
+            token_expires_at=now_utc() + timedelta(hours=1), status="pending",
         )
         db.add(doc)
         await db.commit()
@@ -133,7 +134,7 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s3.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok3",
-            token_expires_at=datetime.utcnow() - timedelta(hours=1), status="pending",
+            token_expires_at=now_utc() - timedelta(hours=1), status="pending",
         )
         db.add(doc)
         await db.commit()
@@ -146,7 +147,7 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s4.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok4",
-            token_expires_at=datetime.utcnow() + timedelta(hours=1), status="pending",
+            token_expires_at=now_utc() + timedelta(hours=1), status="pending",
         )
         db.add(doc)
         await db.commit()
@@ -159,8 +160,8 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s5.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok5",
-            token_expires_at=datetime.utcnow() - timedelta(hours=1), status="pending",
-            downloaded_at=datetime.utcnow() - timedelta(hours=2),
+            token_expires_at=now_utc() - timedelta(hours=1), status="pending",
+            downloaded_at=now_utc() - timedelta(hours=2),
         )
         db.add(doc)
         await db.commit()
@@ -173,8 +174,8 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s6.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok6",
-            token_expires_at=datetime.utcnow() + timedelta(hours=1), status="served",
-            served_at=datetime.utcnow(),
+            token_expires_at=now_utc() + timedelta(hours=1), status="served",
+            served_at=now_utc(),
         )
         db.add(doc)
         await db.commit()
@@ -187,7 +188,7 @@ class TestDocumentProperties:
             original_filename="t.pdf", stored_filename="s7.pdf", file_size=100,
             sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
             recipient_email="r@e.com", download_token="tok7",
-            token_expires_at=datetime.utcnow() + timedelta(hours=1), status="pending",
+            token_expires_at=now_utc() + timedelta(hours=1), status="pending",
         )
         db.add(doc)
         await db.commit()
@@ -215,8 +216,8 @@ class TestDocumentStats:
                 original_filename="t.pdf", stored_filename=f"stat{i}.pdf", file_size=100,
                 sender_id=test_user.id, sender_email=test_user.email, sender_name=test_user.full_name,
                 recipient_email="r@e.com", download_token=f"stattok{i}",
-                token_expires_at=datetime.utcnow() + timedelta(hours=1), status="pending",
-                downloaded_at=datetime.utcnow() if i < 2 else None,
+                token_expires_at=now_utc() + timedelta(hours=1), status="pending",
+                downloaded_at=now_utc() if i < 2 else None,
             )
             db.add(doc)
             await db.commit()
@@ -288,7 +289,7 @@ class TestDocumentDownload:
             sender_name=test_user.full_name,
             recipient_email="recipient@example.com",
             download_token="expired-test-token-123",
-            token_expires_at=datetime.utcnow() - timedelta(hours=1),
+            token_expires_at=now_utc() - timedelta(hours=1),
             status="pending",
         )
         db.add(doc)

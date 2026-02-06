@@ -5,12 +5,13 @@ Provides immutable audit logging with hash-chain integrity verification.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Any
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.audit import AuditLog, AuditEventType
+from src.timestamps import now_utc
 
 
 async def log_event(
@@ -51,7 +52,7 @@ async def log_event(
         user_agent = user_agent[:500]
 
     # Create timestamp
-    created_at = datetime.utcnow()
+    created_at = now_utc()
 
     # Compute hash of this entry
     entry_hash = AuditLog.compute_hash(
@@ -230,7 +231,7 @@ def export_audit_trail_to_json(entries: List[AuditLog]) -> str:
         JSON string
     """
     data = {
-        "export_timestamp": datetime.utcnow().isoformat(),
+        "export_timestamp": now_utc().isoformat(),
         "entry_count": len(entries),
         "entries": [
             {
