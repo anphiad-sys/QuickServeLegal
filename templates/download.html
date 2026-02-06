@@ -66,6 +66,7 @@
 
     <!-- Download Button -->
     <form method="POST" action="/download/{{ document.download_token }}" class="text-center">
+        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
         <button
             type="submit"
             class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center"

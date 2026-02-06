@@ -32,6 +32,7 @@
         </div>
         {% if mock_mode and user.is_verified %}
         <form method="POST" action="/certificates/register-mock">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
             <button
                 type="submit"
                 class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
@@ -77,6 +78,7 @@
             </div>
             {% if mock_mode %}
             <form method="POST" action="/verify-self" class="ml-4">
+                <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                 <button
                     type="submit"
                     class="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
@@ -174,12 +176,14 @@
                     <div class="flex space-x-2">
                         {% if cert.is_active and not cert.is_revoked and not cert.is_expired %}
                         <form method="POST" action="/certificates/{{ cert.id }}/deactivate" onsubmit="return confirm('Are you sure you want to deactivate this certificate?');">
+                            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                             <button type="submit" class="text-sm text-gray-600 hover:text-gray-900 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50">
                                 Deactivate
                             </button>
                         </form>
                         {% elif not cert.is_active and not cert.is_revoked and not cert.is_expired %}
                         <form method="POST" action="/certificates/{{ cert.id }}/reactivate">
+                            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                             <button type="submit" class="text-sm text-primary-600 hover:text-primary-700 px-3 py-1 border border-primary-300 rounded-lg hover:bg-primary-50">
                                 Reactivate
                             </button>

@@ -13,8 +13,6 @@ aiosqlite>=0.19.0  # Async SQLite for development
 
 # Authentication & Security
 python-multipart>=0.0.6  # Form handling
-passlib[bcrypt]>=1.7.4   # Password hashing
-python-jose[cryptography]>=3.3.0  # JWT tokens
 itsdangerous>=2.1.2      # Secure tokens for download links
 
 # File Handling
@@ -22,7 +20,8 @@ python-magic-bin>=0.4.14  # File type detection (Windows)
 aiofiles>=23.2.1         # Async file operations
 
 # PDF Generation
-reportlab>=4.0.8         # PDF creation (you know this from Brolink!)
+reportlab>=4.0.8         # PDF creation
+pypdf>=4.0.0             # PDF reading/stamping
 
 # Email
 aiosmtplib>=3.0.1        # Async email sending

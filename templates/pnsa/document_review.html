@@ -35,6 +35,7 @@
     {% endif %}
 
     <form method="POST" action="/pnsa/document/{{ walk_in.id }}/update" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Left Column - Recipient & Case Details -->
             <div class="space-y-6">

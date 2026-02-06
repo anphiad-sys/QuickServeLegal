@@ -52,6 +52,40 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 # =============================================================================
+# PNSA SYSTEM USER
+# =============================================================================
+
+async def _get_pnsa_system_user(db: AsyncSession, branch: Branch) -> User:
+    """
+    Get or create a system user for PNSA document ownership.
+
+    Each branch gets a dedicated system user so documents are not
+    assigned to an arbitrary user ID.
+    """
+    system_email = f"pnsa.{branch.branch_code.lower()}@quickservelegal.co.za"
+    result = await db.execute(
+        select(User).where(User.email == system_email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        from src.auth import hash_password
+        user = User(
+            email=system_email,
+            password_hash=hash_password(secrets.token_urlsafe(32)),
+            full_name=f"PNSA System - {branch.branch_name}",
+            firm_name="PNSA",
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    return user
+
+
+# =============================================================================
 # AUTHENTICATION
 # =============================================================================
 
@@ -297,15 +331,17 @@ async def pnsa_scan_submit(
         # Create preliminary document record (will be updated after review)
         token_expires_at = datetime.utcnow() + timedelta(hours=settings.DOWNLOAD_TOKEN_EXPIRE_HOURS)
 
+        # Find or create the PNSA system user for this branch
+        pnsa_sender = await _get_pnsa_system_user(db, branch)
+
         doc = Document(
             original_filename=original_filename,
             stored_filename=stored_filename,
             file_size=file_size,
             content_type="application/pdf",
             source_type=DocumentSourceType.PNSA,
-            # Placeholder sender info (will be service account)
-            sender_id=1,  # Will be updated
-            sender_email="pnsa@quickservelegal.co.za",
+            sender_id=pnsa_sender.id,
+            sender_email=pnsa_sender.email,
             sender_name=f"PNSA - {branch.branch_name}",
             # Recipient from OCR (to be confirmed)
             recipient_email=ocr_data.get("recipient_attorney_email") or "pending@review.required",
@@ -345,8 +381,7 @@ async def pnsa_scan_submit(
             serving_attorney_email=ocr_data.get("serving_attorney_email"),
             serving_attorney_phone=ocr_data.get("serving_attorney_phone"),
             serving_attorney_address=ocr_data.get("serving_attorney_address"),
-            # Billing (to be set after recipient is confirmed)
-            billed_to_member_id=1,  # Placeholder
+            # Billing (set when recipient is confirmed in document update step)
             service_fee=get_service_fee(),
             billing_status="pending",
             # Status

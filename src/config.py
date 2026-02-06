@@ -4,6 +4,7 @@ QuickServe Legal - Configuration Settings
 
 from pathlib import Path
 from pydantic_settings import BaseSettings
+from pydantic import model_validator
 from typing import Optional
 
 
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # Security
-    SECRET_KEY: str = "dev-secret-key-change-in-production"  # CHANGE IN PRODUCTION!
+    SECRET_KEY: str = "dev-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     DOWNLOAD_TOKEN_EXPIRE_HOURS: int = 72  # 3 days
 
@@ -80,6 +81,16 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None  # Claude API key for OCR
     OCR_MAX_PAGES: int = 3  # Maximum pages to process for OCR
     OCR_CONFIDENCE_THRESHOLD: float = 0.7  # Minimum confidence for auto-fill
+
+    @model_validator(mode="after")
+    def validate_secret_key(self):
+        """Refuse to start with the default secret key in production."""
+        if not self.DEBUG and self.SECRET_KEY == "dev-secret-key-change-in-production":
+            raise ValueError(
+                "SECRET_KEY must be changed from the default value in production. "
+                "Set a strong, unique SECRET_KEY in your .env file."
+            )
+        return self
 
     class Config:
         env_file = ".env"

@@ -119,6 +119,7 @@
         <h2 class="text-lg font-medium text-gray-900 mb-4">Sign Document</h2>
 
         <form method="POST" action="/signing/document/{{ document.id }}" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
             <!-- Legal Disclaimer -->
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 class="text-sm font-medium text-gray-900 mb-2">Legal Disclaimer</h3>

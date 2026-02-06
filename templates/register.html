@@ -27,6 +27,7 @@
             {% endif %}
 
             <form method="POST" action="/register" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                 <!-- Full Name -->
                 <div>
                     <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">

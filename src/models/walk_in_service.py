@@ -50,8 +50,8 @@ class WalkInService(Base):
     served_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     confirmations_printed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
-    # Billing details
-    billed_to_member_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    # Billing details (set when recipient is confirmed)
+    billed_to_member_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     service_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     billing_status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
     billed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -74,7 +74,7 @@ class WalkInService(Base):
     document: Mapped["Document"] = relationship("Document", back_populates="walk_in_service")
     branch: Mapped["Branch"] = relationship("Branch", back_populates="walk_in_services")
     operator: Mapped["BranchOperator"] = relationship("BranchOperator", back_populates="walk_in_services")
-    billed_to_member: Mapped["User"] = relationship("User", foreign_keys=[billed_to_member_id])
+    billed_to_member: Mapped[Optional["User"]] = relationship("User", foreign_keys=[billed_to_member_id])
 
     def __repr__(self) -> str:
         return f"<WalkInService {self.id}: {self.serving_attorney_name} via {self.branch_id}>"

@@ -358,6 +358,7 @@
                 <h2 class="font-semibold text-green-900 mb-2">Ready to Serve</h2>
                 <p class="text-sm text-green-800 mb-4">Document is signed. Click below to serve it on the recipient.</p>
                 <form action="/document/{{ document.id }}/serve" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                     <button
                         type="submit"
                         class="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg text-sm text-center transition-colors"

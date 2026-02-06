@@ -121,6 +121,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="font-semibold text-gray-900 mb-4">Actions</h2>
         <form method="POST" action="/certificates/{{ certificate.id }}/deactivate" onsubmit="return confirm('Are you sure you want to deactivate this certificate?');">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
             <input type="hidden" name="reason" value="Deactivated by user">
             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                 Deactivate Certificate
@@ -134,6 +135,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="font-semibold text-gray-900 mb-4">Actions</h2>
         <form method="POST" action="/certificates/{{ certificate.id }}/reactivate">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                 Reactivate Certificate
             </button>

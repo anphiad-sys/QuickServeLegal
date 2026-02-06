@@ -13,6 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import settings, TEMPLATES_DIR, STATIC_DIR
 from src.database import init_db, close_db, get_db
 from src.auth import get_current_user
+from src.csrf import CSRFMiddleware
+from src.rate_limit import RateLimitMiddleware
 from src.routes.auth_routes import router as auth_router
 from src.routes.document_routes import router as document_router
 from src.routes.signing_routes import router as signing_router
@@ -34,6 +36,12 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Set up Jinja2 templates
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+# Add CSRF protection middleware
+app.add_middleware(CSRFMiddleware)
+
+# Add rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
 
 # Include routers
 app.include_router(auth_router)
