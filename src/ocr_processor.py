@@ -9,6 +9,7 @@ This is a SHARED feature used by:
 
 import base64
 import io
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, List
@@ -18,6 +19,21 @@ import logging
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Regex to strip HTML/XML tags (defense-in-depth for XSS prevention)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def sanitize_ocr_text(text: Optional[str]) -> Optional[str]:
+    """
+    Strip HTML tags from OCR-extracted text as defense-in-depth against XSS.
+
+    Jinja2 autoescaping handles output escaping, but we also sanitize at input
+    time to prevent malicious content from being stored in the database.
+    """
+    if text is None:
+        return None
+    return _HTML_TAG_RE.sub("", text)
 
 
 @dataclass
@@ -274,27 +290,27 @@ def parse_extraction_result(data: dict) -> DocumentExtraction:
         Structured DocumentExtraction object
     """
     serving_attorney = AttorneyInfo(
-        name=data.get("serving_attorney_name"),
-        firm=data.get("serving_attorney_firm"),
-        email=data.get("serving_attorney_email"),
-        phone=data.get("serving_attorney_phone"),
-        address=data.get("serving_attorney_address"),
+        name=sanitize_ocr_text(data.get("serving_attorney_name")),
+        firm=sanitize_ocr_text(data.get("serving_attorney_firm")),
+        email=sanitize_ocr_text(data.get("serving_attorney_email")),
+        phone=sanitize_ocr_text(data.get("serving_attorney_phone")),
+        address=sanitize_ocr_text(data.get("serving_attorney_address")),
     )
 
     recipient_attorney = AttorneyInfo(
-        name=data.get("recipient_attorney_name"),
-        firm=data.get("recipient_attorney_firm"),
-        email=data.get("recipient_attorney_email"),
-        phone=data.get("recipient_attorney_phone"),
-        address=data.get("recipient_attorney_address"),
+        name=sanitize_ocr_text(data.get("recipient_attorney_name")),
+        firm=sanitize_ocr_text(data.get("recipient_attorney_firm")),
+        email=sanitize_ocr_text(data.get("recipient_attorney_email")),
+        phone=sanitize_ocr_text(data.get("recipient_attorney_phone")),
+        address=sanitize_ocr_text(data.get("recipient_attorney_address")),
     )
 
     return DocumentExtraction(
-        plaintiff=data.get("plaintiff"),
-        defendant=data.get("defendant"),
-        case_number=data.get("case_number"),
-        court_name=data.get("court_name"),
-        pleading_type=data.get("pleading_type"),
+        plaintiff=sanitize_ocr_text(data.get("plaintiff")),
+        defendant=sanitize_ocr_text(data.get("defendant")),
+        case_number=sanitize_ocr_text(data.get("case_number")),
+        court_name=sanitize_ocr_text(data.get("court_name")),
+        pleading_type=sanitize_ocr_text(data.get("pleading_type")),
         serving_attorney=serving_attorney,
         recipient_attorney=recipient_attorney,
         confidence_score=data.get("confidence_score", 0.0),

@@ -17,7 +17,6 @@ itsdangerous>=2.1.2      # Secure tokens for download links
 
 # File Handling
 python-magic-bin>=0.4.14  # File type detection (Windows)
-aiofiles>=23.2.1         # Async file operations
 
 # PDF Generation
 reportlab>=4.0.8         # PDF creation
@@ -30,9 +29,6 @@ aiosmtplib>=3.0.1        # Async email sending
 pydantic>=2.5.3          # Data validation
 pydantic-settings>=2.1.0 # Settings management
 email-validator>=2.1.0   # Email validation
-
-# Date/Time
-python-dateutil>=2.8.2
 
 # Development
 python-dotenv>=1.0.0     # Environment variables

@@ -7,14 +7,13 @@ Mirrors the patterns in src/auth.py but for BranchOperator accounts.
 
 from datetime import datetime
 from typing import Optional
-import hashlib
-import secrets
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request, HTTPException, status
 
 from src.config import settings
+from src.auth import hash_password, verify_password  # Single source of truth
 from src.models.branch_operator import BranchOperator
 from src.models.branch import Branch
 
@@ -27,37 +26,6 @@ PNSA_SESSION_COOKIE = "pnsa_session"
 
 # Session expiry (default 8 hours for branch operators)
 PNSA_SESSION_EXPIRE_MINUTES = getattr(settings, 'PNSA_SESSION_EXPIRE_MINUTES', 480)
-
-
-# =============================================================================
-# PASSWORD UTILITIES
-# =============================================================================
-
-def hash_password(password: str) -> str:
-    """Hash a password using PBKDF2-SHA256."""
-    salt = secrets.token_hex(16)
-    pwd_hash = hashlib.pbkdf2_hmac(
-        'sha256',
-        password.encode('utf-8'),
-        salt.encode('utf-8'),
-        100000  # iterations
-    ).hex()
-    return f"{salt}${pwd_hash}"
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    try:
-        salt, stored_hash = hashed_password.split('$')
-        pwd_hash = hashlib.pbkdf2_hmac(
-            'sha256',
-            plain_password.encode('utf-8'),
-            salt.encode('utf-8'),
-            100000
-        ).hex()
-        return secrets.compare_digest(pwd_hash, stored_hash)
-    except ValueError:
-        return False
 
 
 # =============================================================================

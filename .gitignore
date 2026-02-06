@@ -49,3 +49,8 @@ nul
 # Test artifacts
 cookies.txt
 docs/*.pdf
+tests/test_uploads/
+add_csrf.py
+
+# Claude Code
+.claude/settings.local.json

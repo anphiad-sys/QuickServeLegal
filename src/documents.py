@@ -48,27 +48,36 @@ def validate_file(file: UploadFile) -> None:
 
 async def save_uploaded_file(file: UploadFile, stored_filename: str) -> int:
     """
-    Save uploaded file to disk.
+    Save uploaded file to disk using streaming to enforce size limit.
+
+    Reads in chunks so oversized files are rejected without consuming
+    all available memory.
 
     Returns the file size in bytes.
     """
     file_path = settings.UPLOAD_DIR / stored_filename
-
-    # Read and save file
-    content = await file.read()
-    file_size = len(content)
-
-    # Check file size
     max_size = settings.MAX_FILE_SIZE_MB * 1024 * 1024
-    if file_size > max_size:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE_MB}MB"
-        )
+    chunk_size = 64 * 1024  # 64KB chunks
+    file_size = 0
 
-    # Write to disk
-    with open(file_path, "wb") as f:
-        f.write(content)
+    try:
+        with open(file_path, "wb") as f:
+            while True:
+                chunk = await file.read(chunk_size)
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if file_size > max_size:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE_MB}MB"
+                    )
+                f.write(chunk)
+    except HTTPException:
+        # Clean up partial file on size rejection
+        if file_path.exists():
+            file_path.unlink()
+        raise
 
     return file_size
 
@@ -188,21 +197,41 @@ async def mark_document_served(
     return document
 
 
-async def mark_document_downloaded(
+async def try_mark_document_downloaded(
     db: AsyncSession,
     document: Document,
     ip_address: str,
     user_agent: str,
-) -> Document:
-    """Mark a document as downloaded (additional confirmation, not required for service)."""
-    document.downloaded_at = datetime.utcnow()
-    document.download_ip = ip_address
-    document.download_user_agent = user_agent[:500] if user_agent else None  # Truncate long user agents
+) -> int:
+    """
+    Atomically mark a document as downloaded using UPDATE ... WHERE.
 
+    Returns the number of rows affected (1 if marked, 0 if already downloaded).
+    This prevents race conditions where concurrent requests both mark the same
+    document as downloaded.
+    """
+    from sqlalchemy import update
+
+    truncated_ua = user_agent[:500] if user_agent else None
+    now = datetime.utcnow()
+
+    result = await db.execute(
+        update(Document)
+        .where(Document.id == document.id)
+        .where(Document.downloaded_at.is_(None))  # Atomic check
+        .values(
+            downloaded_at=now,
+            download_ip=ip_address,
+            download_user_agent=truncated_ua,
+        )
+    )
+    rows_affected = result.rowcount
     await db.commit()
-    await db.refresh(document)
 
-    return document
+    if rows_affected > 0:
+        await db.refresh(document)
+
+    return rows_affected
 
 
 def get_document_stats(documents: List[Document]) -> dict:

@@ -61,8 +61,9 @@ def verify_sendgrid_webhook_signature(
         True if signature is valid, False otherwise
     """
     if not settings.SENDGRID_WEBHOOK_SECRET:
-        # No secret configured, skip verification in development
-        return True
+        # No secret configured - reject for security
+        # Configure SENDGRID_WEBHOOK_SECRET in .env to enable webhook processing
+        return False
 
     # SendGrid uses ECDSA signature verification
     # For simplicity, we'll use HMAC verification if using a simple secret

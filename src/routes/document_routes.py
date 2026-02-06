@@ -22,7 +22,7 @@ from src.documents import (
     get_user_sent_documents,
     get_file_path,
     mark_document_served,
-    mark_document_downloaded,
+    try_mark_document_downloaded,
 )
 from src.notifications import notify_recipient_of_document, notify_sender_of_download
 from src.pdf_generator import (
@@ -323,16 +323,14 @@ async def download_file(
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found on server")
 
-    # Mark as downloaded if first time and notify sender
-    if not doc.is_downloaded:
-        # Get client info
-        client_ip = request.client.host if request.client else "unknown"
-        user_agent = request.headers.get("user-agent", "unknown")
+    # Atomically mark as downloaded if first time, then notify sender
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    rows_affected = await try_mark_document_downloaded(db, doc, client_ip, user_agent)
 
-        await mark_document_downloaded(db, doc, client_ip, user_agent)
-
-        # Notify sender that document was downloaded (don't need to track this email)
-        await notify_sender_of_download(doc)  # Returns tuple but we don't need message_id
+    if rows_affected > 0:
+        # First download - notify sender
+        await notify_sender_of_download(doc)
 
     # Return the file
     return FileResponse(

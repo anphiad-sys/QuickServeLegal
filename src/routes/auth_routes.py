@@ -7,6 +7,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from email_validator import validate_email, EmailNotValidError
+
 from src.config import settings, TEMPLATES_DIR
 from src.database import get_db
 from src.auth import (
@@ -139,6 +141,13 @@ async def register_submit(
     # Validation
     if not terms_accepted_bool:
         errors.append("You must accept the Terms of Service")
+
+    # Validate email format
+    try:
+        email_info = validate_email(email, check_deliverability=False)
+        email = email_info.normalized
+    except EmailNotValidError:
+        errors.append("Please enter a valid email address")
 
     if password != password_confirm:
         errors.append("Passwords do not match")

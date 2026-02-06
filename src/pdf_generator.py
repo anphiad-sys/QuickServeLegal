@@ -11,6 +11,7 @@ Generates:
 import io
 from datetime import datetime
 from pathlib import Path
+from src.timestamps import format_sast
 from typing import Optional, TYPE_CHECKING
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -352,7 +353,7 @@ def generate_proof_of_service(
     story.append(Spacer(1, 1*cm))
 
     # Footer with generation timestamp
-    gen_time = datetime.utcnow().strftime("%d %B %Y at %H:%M:%S UTC")
+    gen_time = format_sast(datetime.utcnow())
     story.append(Paragraph(
         f"<i>This Proof of Service was generated on {gen_time}</i>",
         styles['QSLLegal']
@@ -920,7 +921,7 @@ def generate_court_filing_certificate(
     story.append(Spacer(1, 1*cm))
 
     # Footer
-    gen_time = datetime.utcnow().strftime("%d %B %Y at %H:%M:%S UTC")
+    gen_time = format_sast(datetime.utcnow())
     story.append(Paragraph(
         f"<i>This Court Filing Certificate was generated on {gen_time}</i>",
         styles['CFCFooter']
